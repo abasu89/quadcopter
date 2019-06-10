@@ -4,7 +4,7 @@ from physics_sim import PhysicsSim
 class Task():
     """Task (environment) that defines the goal and provides feedback to the agent.""" 
     def __init__(self, init_pose=None, init_velocities=None, 
-        init_angle_velocities=None, runtime=5., target_pos=None): # takes in the different aspects of starting pose to create instance
+        init_angle_velocities=None, runtime=5., hover_pos=None): # takes in the different aspects of starting pose to create instance
         """Initialize a Task object.
         Params
         ======
@@ -12,7 +12,8 @@ class Task():
             init_velocities: initial velocity of the quadcopter in (x,y,z) dimensions
             init_angle_velocities: initial radians/second for each of the three Euler angles
             runtime: time limit for each episode
-            target_pos: target/goal (x,y,z) position for the agent
+            hover_pos: target/goal (x,y,z) hover position for the agent
+            hover_angle: target/goal hover Euler angles in x,y,z axes for the agent
         """
         # Simulation
         # specify different attributes of Task class
@@ -23,13 +24,20 @@ class Task():
         self.action_low = 0
         self.action_high = 900
         self.action_size = 4
-
+        
         # Goal
-        self.target_pos = target_pos if target_pos is not None else np.array([0., 0., 10.]) 
+        self.hover_pos = hover_pos if hover_pos is not None else np.array([0., 0., 10.]) #set default hover position to [0, 0, 10]
+        self.hover_pos_v = np.array([0., 0., 0.]) #set hover velocity in all directions to 0
+        #self.hover_angle = np.array([0., 0., 0.]) if hover_angle is None else np.copy(hover_angle) #set default hover orientation to horizontal (0,0,0)
+        self.hover_angular_v = np.array([0., 0., 0.]) #set hover angle velocity in all directions to 0
+        
 
     def get_reward(self):
-        """Uses current pose of sim to return reward."""
-        reward = 1.-.3*(abs(self.sim.pose[:3] - self.target_pos)).sum() #uses the first 3 elements of self.sim.pose (x,y,z) to compute reward
+        """Uses current pose, velocity and orientation of sim to return reward."""
+        #reward = 10000.0 -3*(abs(self.sim.pose[:3] - self.hover_pos)).sum()
+        reward = 0
+        penalty = abs(abs(self.sim.pose[:3] - self.hover_pos).sum() - abs(self.sim.v).sum())
+        reward -= penalty
         return reward
 
     def step(self, rotor_speeds):
