@@ -1,6 +1,7 @@
-from keras import layers, models, optimizers
+from keras import layers, models, optimizers, initializers
 from keras import backend as K
 from keras.layers.normalization import BatchNormalization
+import keras
 import numpy as np
 import copy
 from task import Task
@@ -23,11 +24,13 @@ class Actor:
         states = layers.Input(shape=(self.state_size,), name='states') # create input layer of shape state_size with name "states"
         
         net = layers.Dense(units=32, activation='relu')(states) # create hidden layer with 32 units and activation relu and add to 'states' layer
-        net = layers.BatchNormalization()
-        net = layers.Dense(units=64, activation='relu')(net) # add another hidden layer with 64 units and activation relu and add to net
+        
+        net = layers.Dense(units=64, activation=None)(net) # add another hidden layer with 64 units and activation relu and add to net
+        net = layers.BatchNormalization()(net)
+        net = layers.Activation('relu')(net)
         net = layers.Dense(units=32, activation='relu')(net) # add another hidden layer with 32 units and activation relu and add to net
-        keras.initializers.RandomUniform(minval=-0.003, maxval=0.003)
-        raw_actions = layers.Dense(units=self.action_size, activation='sigmoid', name='raw_actions')(net) # add output layer with action_size units, activation sigmoid generating action outputs in the range [0,1], name of layer is raw_actions
+        initializer = keras.initializers.RandomUniform(minval=-0.003, maxval=0.003)
+        raw_actions = layers.Dense(units=self.action_size, activation='sigmoid', name='raw_actions', kernel_initializer=initializer)(net) # add output layer with action_size units, activation sigmoid generating action outputs in the range [0,1], name of layer is raw_actions
         
         
         actions = layers.Lambda(lambda x: (x * self.action_range) + self.action_low, name='actions')(raw_actions) # add another layer that scales previous outputs to desired range for each action dimension
@@ -56,24 +59,25 @@ class Critic:
 
         # create network for states
         net_states = layers.Dense(units=32, activation='relu')(states) 
-        net_states = layers.BatchNormalization()
-        net_states = layers.Dense(units=64, activation='relu')(net_states)
-
+        net_states = layers.Dense(units=64, activation=None)(net_states)
+        net_states = layers.BatchNormalization()(net_states)
+        net_states = layers.Activation('relu')(net_states)
         # create network for actions
         net_actions = layers.Dense(units=32, activation='relu')(actions)
-        net_actions = layers.BatchNormalization()
-        net_actions = layers.Dense(units=64, activation='relu')(net_actions)
+        net_actions = layers.Dense(units=64, activation=None)(net_actions)
+        net_actions = layers.BatchNormalization()(net_actions)
+        net_actions = layers.Activation('relu')(net_actions)
 
         # merge states and actions layers
         net = layers.Add()([net_states, net_actions])
         net = layers.Activation('relu')(net) # apply relu activation
-        keras.initializers.RandomUniform(minval=-0.003, maxval=0.003)
-        Q_values = layers.Dense(units=1, name='q_values')(net) # add layer with one unit that outputs Q-value for the given state-action pair
+        initializer = keras.initializers.RandomUniform(minval=-0.003, maxval=0.003) # define initial weights of final layer
+        Q_values = layers.Dense(units=1, name='q_values', kernel_initializer=initializer)(net) # add layer with one unit that outputs Q-value for the given state-action pair
 
         self.model = models.Model(inputs=[states, actions], outputs=Q_values) # create model
 
         # set optimizer and compile model using Adam optimizer and MSE loss function
-        optimizer = optimizers.Adam()
+        optimizer = optimizers.Adam(lr=0.0001)
         self.model.compile(optimizer=optimizer, loss='mse')
 
         action_gradients = K.gradients(Q_values, actions) # compute action gradients
