@@ -36,9 +36,13 @@ class Task():
         """Uses current pose, velocity and orientation of sim to return reward."""
         #reward = 10000.0 -3*(abs(self.sim.pose[:3] - self.hover_pos)).sum()
         reward = 0
-        penalty = abs(abs(self.sim.pose[:3] - self.hover_pos).sum() - abs(self.sim.v).sum())
-        reward -= penalty
-        return reward
+        threshold = 6
+        if abs(self.sim.pose[2] - self.hover_pos[2]) < threshold:
+            reward += 100
+        else:
+            penalty = abs(abs(self.sim.pose[:3] - self.hover_pos).sum() - abs(self.sim.v).sum())
+            reward -= penalty
+        return np.tanh(reward)
 
     def step(self, rotor_speeds):
         """Uses action to obtain next state, reward, done."""
