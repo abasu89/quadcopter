@@ -10,3 +10,6 @@ The project consists of four files:
 3) agent.py: A Deep Deterministic Policy Gradient (DDPG) learning agent is implemented in this file.
 
 4) Quadcopter_Project.ipynb: This is the main notebook used to train the agent, evaluate its learning behavior via the reward function, and provide reflections on the project.
+
+## References
+The DDPG agent was implemented using the following conference paper: [Continuous control with deep reinforcement learning](https://arxiv.org/abs/1509.02971)
