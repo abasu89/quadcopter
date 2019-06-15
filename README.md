@@ -1,5 +1,5 @@
 # Teach a Quadcopter How to Fly
-This project aims to teach a quadcopter how to hover at a (x,y,z) position specified by the user. 
+This project aims to teach a quadcopter how to hover at a (x,y,z) position specified by the user. Please note that the project is still ongoing.
 
 The project consists of four files:
 
